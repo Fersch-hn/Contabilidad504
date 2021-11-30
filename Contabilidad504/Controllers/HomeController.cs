@@ -1,4 +1,5 @@
 ﻿using Contabilidad504.Models;
+using Contabilidad504.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,10 +13,12 @@ namespace Contabilidad504.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IWorkBookService _workBookService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, IWorkBookService workBookService)
         {
             _logger = logger;
+            _workBookService = workBookService;
         }
 
         public IActionResult Index()
@@ -25,6 +28,7 @@ namespace Contabilidad504.Controllers
 
         public IActionResult Privacy()
         {
+            _workBookService.InsertText(@"C:\Users\Fernando Martinez\Desktop\ejemplo.xlsx", "Hola");
             return View();
         }
 

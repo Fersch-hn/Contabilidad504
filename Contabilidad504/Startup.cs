@@ -1,4 +1,5 @@
 using Contabilidad504.Data;
+using Contabilidad504.Services;
 using ElectronNET.API;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,6 +37,7 @@ namespace Contabilidad504
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
+            services.AddScoped<IWorkBookService, WorkBookService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

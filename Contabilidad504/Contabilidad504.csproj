@@ -4,6 +4,7 @@
     <UserSecretsId>aspnet-Contabilidad504-1E2EE002-F3D2-4B01-8A62-4CEE46BE9DA7</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="2.14.0" />
     <PackageReference Include="ElectronNET.API" Version="13.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="5.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.10" />
