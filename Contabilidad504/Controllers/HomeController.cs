@@ -28,7 +28,8 @@ namespace Contabilidad504.Controllers
 
         public IActionResult Privacy()
         {
-            _workBookService.InsertText(@"C:\Users\Fernando Martinez\Desktop\ejemplo.xlsx", "Hola");
+            //_workBookService.InsertTextInWorksheet(@"C:\Users\Fernando Martinez\Desktop\ejemplo.xlsx", "Adios", "B", 2, "Hoja1");
+            var hello =_workBookService.GetCellValue(@"C:\Users\Fernando Martinez\Desktop\ejemplo.xlsx",  "Hoja1", "B2");
             return View();
         }
 

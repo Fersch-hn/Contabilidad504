@@ -10,16 +10,96 @@ namespace Contabilidad504.Services
 {
     public interface IWorkBookService
     {
-        void InsertText(string docName, string text);
+        void InsertTextInWorksheet(string docName, string text, string column, uint row, string sheetName);
+        string GetCellValue(string fileName, string sheetName, string addressName);
     }
 
     public class WorkBookService : IWorkBookService
     {
-        public void InsertText(string docName, string text)
+        // Retrieve the value of a cell, given a file name, sheet name, 
+        // and address name.
+        public string GetCellValue(string fileName,
+            string sheetName,
+            string addressName)
+        {
+            string value = null;
+
+            // Open the spreadsheet document for read-only access.
+            using (SpreadsheetDocument document =
+                SpreadsheetDocument.Open(fileName, false))
+            {
+                // Retrieve a reference to the workbook part.
+                WorkbookPart wbPart = document.WorkbookPart;
+
+                // Find the sheet with the supplied name, and then use that 
+                // Sheet object to retrieve a reference to the first worksheet.
+                WorksheetPart wsPart = GetWorksheetPart(wbPart, sheetName);
+
+                // Use its Worksheet property to get a reference to the cell 
+                // whose address matches the address you supplied.
+                Cell theCell = wsPart.Worksheet.Descendants<Cell>().
+                  Where(c => c.CellReference == addressName).FirstOrDefault();
+
+                // If the cell does not exist, return an empty string.
+                if (theCell.InnerText.Length > 0)
+                {
+                    value = theCell.InnerText;
+
+                    // If the cell represents an integer number, you are done. 
+                    // For dates, this code returns the serialized value that 
+                    // represents the date. The code handles strings and 
+                    // Booleans individually. For shared strings, the code 
+                    // looks up the corresponding value in the shared string 
+                    // table. For Booleans, the code converts the value into 
+                    // the words TRUE or FALSE.
+                    if (theCell.DataType != null)
+                    {
+                        switch (theCell.DataType.Value)
+                        {
+                            case CellValues.SharedString:
+
+                                // For shared strings, look up the value in the
+                                // shared strings table.
+                                var stringTable =
+                                    wbPart.GetPartsOfType<SharedStringTablePart>()
+                                    .FirstOrDefault();
+
+                                // If the shared string table is missing, something 
+                                // is wrong. Return the index that is in
+                                // the cell. Otherwise, look up the correct text in 
+                                // the table.
+                                if (stringTable != null)
+                                {
+                                    value =
+                                        stringTable.SharedStringTable
+                                        .ElementAt(int.Parse(value)).InnerText;
+                                }
+                                break;
+
+                            case CellValues.Boolean:
+                                switch (value)
+                                {
+                                    case "0":
+                                        value = "FALSE";
+                                        break;
+                                    default:
+                                        value = "TRUE";
+                                        break;
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            return value;
+        }
+
+
+        public void InsertTextInWorksheet(string docName, string text, string column, uint row, string sheetName)
         {
             // Open the document for editing.
             using (SpreadsheetDocument spreadSheet = SpreadsheetDocument.Open(docName, true))
-            {
+            {             
                 // Get the SharedStringTablePart. If it does not exist, create a new one.
                 SharedStringTablePart shareStringPart;
                 if (spreadSheet.WorkbookPart.GetPartsOfType<SharedStringTablePart>().Count() > 0)
@@ -31,14 +111,13 @@ namespace Contabilidad504.Services
                     shareStringPart = spreadSheet.WorkbookPart.AddNewPart<SharedStringTablePart>();
                 }
 
-                // Insert the text into the SharedStringTablePart.
+                //// Insert the text into the SharedStringTablePart.
                 int index = InsertSharedStringItem(text, shareStringPart);
 
-                // Insert a new worksheet.
-                WorksheetPart worksheetPart = InsertWorksheet(spreadSheet.WorkbookPart);
+                WorksheetPart worksheetPart = GetWorksheetPart(spreadSheet.WorkbookPart, sheetName);
 
                 // Insert cell A1 into the new worksheet.
-                Cell cell = InsertCellInWorksheet("A", 1, worksheetPart);
+                Cell cell = InsertCellInWorksheet(column, row, worksheetPart);
 
                 // Set the value of cell A1.
                 cell.CellValue = new CellValue(index.ToString());
@@ -47,6 +126,21 @@ namespace Contabilidad504.Services
                 // Save the new worksheet.
                 worksheetPart.Worksheet.Save();
             }
+        }
+
+        private WorksheetPart GetWorksheetPart(WorkbookPart workbookPart, string sheetName)
+        {
+            Sheet theSheet = workbookPart.Workbook.Descendants<Sheet>().
+                Where(s => s.Name == sheetName).FirstOrDefault();
+
+            // Throw an exception if there is no sheet.
+            if (theSheet == null)
+            {
+                throw new ArgumentException("sheetName");
+            }
+
+            // Retrieve a reference to the worksheet part.
+            return (WorksheetPart)(workbookPart.GetPartById(theSheet.Id));
         }
 
         // Given text and a SharedStringTablePart, creates a SharedStringItem with the specified text 
